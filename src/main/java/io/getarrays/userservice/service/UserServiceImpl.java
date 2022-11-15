@@ -10,6 +10,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -24,10 +25,12 @@ import java.util.List;
 public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserRepo userRepo;
     private final RoleRepo roleRepo;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public User saveUser(User user) {
         log.debug("Saving new user to the database.");
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepo.save(user);
     }
 
@@ -64,12 +67,14 @@ public class UserServiceImpl implements UserService, UserDetailsService {
             log.error("Username is not found in database.");
             throw new UsernameNotFoundException("Username not found in database");
         } else
-            log.info("Usename is found in database : {}", username);
+            log.info("Username is found in database : {}", username);
 
         Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
         user.getRole().forEach(role->{
             authorities.add(new SimpleGrantedAuthority(role.getName()));
         });
+
+        System.out.println(authorities.size() + " size test ");
 
         return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), authorities);
     }
